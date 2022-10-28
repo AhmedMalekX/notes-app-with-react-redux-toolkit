@@ -1,34 +1,35 @@
-import { createSlice, nanoid } from "@reduxjs/toolkit";
+import { createSlice, nanoid, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 import { subMinutes } from "date-fns";
 
-const initialState = [
-  {
-    id: "1",
-    title: "Hello world",
-    content: "Hello world from ReactJs",
-    date: subMinutes(new Date(), 10).toISOString(),
-    reactions: {
-      thumbsUp: 0,
-      wow: 0,
-      heart: 0,
-      rocket: 0,
-      coffee: 0,
-    },
-  },
-  {
-    id: "2",
-    title: "Hello There",
-    content: "Hello There from ReactJs",
-    date: subMinutes(new Date(), 5).toISOString(),
-    reactions: {
-      thumbsUp: 0,
-      wow: 0,
-      heart: 0,
-      rocket: 0,
-      coffee: 0,
-    },
-  },
-];
+const NOTES_URL = "https://jsonplaceholder.typicode.com/posts";
+
+const initialState = {
+  notes: [],
+  status: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed',
+  error: null,
+};
+
+export const fetchNotes = createAsyncThunk("notes/fetchNotes", async () => {
+  try {
+    const response = await axios.get(NOTES_URL);
+    return [...response.data];
+  } catch (err) {
+    return err.message;
+  }
+});
+
+export const addNewNote = createAsyncThunk(
+  "notes/addNewNote",
+  async (initialState) => {
+    try {
+      const response = await axios.post(NOTES_URL, initialState);
+      return response.data;
+    } catch (err) {
+      return err.message;
+    }
+  }
+);
 
 const notesSlice = createSlice({
   name: "notes",
@@ -36,7 +37,7 @@ const notesSlice = createSlice({
   reducers: {
     addNote: {
       reducer(state, action) {
-        state.push(action.payload);
+        state.notes.push(action.payload);
       },
       prepare(title, content, userId) {
         return {
@@ -59,15 +60,56 @@ const notesSlice = createSlice({
     },
     addReaction: (state, action) => {
       const { noteId, reaction } = action.payload;
-      const existingNote = state.find((note) => note.id === noteId);
+      const existingNote = state.notes.find((note) => note.id === noteId);
       if (existingNote) {
         existingNote.reactions[reaction]++;
       }
     },
   },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchNotes.pending, (state, action) => {
+        state.status = "loading";
+      })
+      .addCase(fetchNotes.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        let min = 1;
+        const loadedNotes = action.payload.map((note) => {
+          note.date = subMinutes(new Date(), min++).toISOString();
+          note.reactions = {
+            thumbsUp: 0,
+            wow: 0,
+            heart: 0,
+            rocket: 0,
+            coffee: 0,
+          };
+
+          return note;
+        });
+        state.notes = state.notes.concat(loadedNotes);
+      })
+      .addCase(fetchNotes.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.error.message;
+      })
+      .addCase(addNewNote.fulfilled, (state, action) => {
+        action.payload.userId = Number(action.payload.userId);
+        action.payload.date = new Date().toISOString();
+        action.payload.reactions = {
+          thumbsUp: 0,
+          wow: 0,
+          heart: 0,
+          rocket: 0,
+          coffee: 0,
+        };
+        state.notes.push(action.payload);
+      });
+  },
 });
 
-export const selectAllNotes = (state) => state.notes;
+export const selectAllNotes = (state) => state.notes.notes;
+export const getNotesStatus = (state) => state.notes.status;
+export const getNotesError = (state) => state.notes.error;
 
 export const { addNote, addReaction } = notesSlice.actions;
 

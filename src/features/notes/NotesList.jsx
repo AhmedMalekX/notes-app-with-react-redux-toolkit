@@ -1,34 +1,44 @@
-import { useSelector } from "react-redux";
-import { selectAllNotes } from "./notesSlice";
-import { NoteAuthor } from "./NoteAuthor";
-import { TimeAgo } from "./TimeAgo";
-import {ReactionButtons} from "./ReactionButtons";
+import { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  selectAllNotes,
+  getNotesStatus,
+  getNotesError,
+  fetchNotes,
+} from "./notesSlice";
+import { NotesExcerpt } from "./NotesExcerpt";
 
 export const NotesList = () => {
+  const dispatch = useDispatch();
+
   const notes = useSelector(selectAllNotes);
+  const notesStatus = useSelector(getNotesStatus);
+  const notesError = useSelector(getNotesError);
 
-  const orderedNotes = notes
-    .slice()
-    .sort((a, b) => b.date.localeCompare(a.date));
+  useEffect(() => {
+    if (notesStatus === "idle") {
+      dispatch(fetchNotes());
+    }
+  }, [notesStatus, dispatch]);
 
-  const renderedNotes = orderedNotes.map((note) => (
-    <article key={note.id}>
-      <h3>{note.title}</h3>
-      <p>{note.content.substring(0, 100)}</p>
-      <p className="postCredit">
-        <NoteAuthor userId={note.userId} />
-        <TimeAgo timestamp={note.date} />
-      </p>
-      <div>
-        <ReactionButtons note={note} />
-      </div>
-    </article>
-  ));
+  let content;
+  if (notesStatus === "loading") {
+    content = <p>Loading...</p>;
+  } else if (notesStatus === "succeeded") {
+    const orderedNotes = notes
+      .slice()
+      .sort((a, b) => b.date.localeCompare(a.date));
+    content = orderedNotes.map((note) => (
+      <NotesExcerpt key={note.id} note={note} />
+    ));
+  } else if (notesStatus === "failed") {
+    content = <p>{notesError}</p>;
+  }
 
   return (
     <section>
       <h2>Notes</h2>
-      {renderedNotes}
+      {content}
     </section>
   );
 };
