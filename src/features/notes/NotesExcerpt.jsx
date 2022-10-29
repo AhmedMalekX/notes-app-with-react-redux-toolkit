@@ -2,8 +2,11 @@ import { NoteAuthor } from "./NoteAuthor";
 import { TimeAgo } from "./TimeAgo";
 import { ReactionButtons } from "./ReactionButtons";
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { selectNoteById } from "./notesSlice";
 
-export const NotesExcerpt = ({ note }) => {
+export const NotesExcerpt = ({ noteId }) => {
+  const note = useSelector((state) => selectNoteById(state, noteId));
   return (
     <article>
       <h2>{note.title}</h2>
