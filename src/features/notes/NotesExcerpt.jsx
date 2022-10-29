@@ -1,13 +1,15 @@
 import { NoteAuthor } from "./NoteAuthor";
 import { TimeAgo } from "./TimeAgo";
 import { ReactionButtons } from "./ReactionButtons";
+import { Link } from "react-router-dom";
 
 export const NotesExcerpt = ({ note }) => {
   return (
     <article>
-      <h3>{note.title}</h3>
-      <p>{note.body.substring(0, 100)}</p>
+      <h2>{note.title}</h2>
+      <p className="excerpt">{note.body.substring(0, 75)}</p>
       <p className="postCredit">
+        <Link to={`note/${note.id}`}>View Note</Link>
         <NoteAuthor userId={note.userId} />
         <TimeAgo timestamp={note.date} />
       </p>

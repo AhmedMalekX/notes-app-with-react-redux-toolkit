@@ -1,25 +1,11 @@
-import { useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import {
-  selectAllNotes,
-  getNotesStatus,
-  getNotesError,
-  fetchNotes,
-} from "./notesSlice";
+import { useSelector } from "react-redux";
+import { selectAllNotes, getNotesStatus, getNotesError } from "./notesSlice";
 import { NotesExcerpt } from "./NotesExcerpt";
 
 export const NotesList = () => {
-  const dispatch = useDispatch();
-
   const notes = useSelector(selectAllNotes);
   const notesStatus = useSelector(getNotesStatus);
   const notesError = useSelector(getNotesError);
-
-  useEffect(() => {
-    if (notesStatus === "idle") {
-      dispatch(fetchNotes());
-    }
-  }, [notesStatus, dispatch]);
 
   let content;
   if (notesStatus === "loading") {
@@ -35,10 +21,5 @@ export const NotesList = () => {
     content = <p>{notesError}</p>;
   }
 
-  return (
-    <section>
-      <h2>Notes</h2>
-      {content}
-    </section>
-  );
+  return <section>{content}</section>;
 };

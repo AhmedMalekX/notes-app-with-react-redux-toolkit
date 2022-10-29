@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
+import { useNavigate } from "react-router-dom";
 import { addNewNote } from "./notesSlice";
 import { selectAllUsers } from "../users/usersSlice";
 
@@ -11,7 +11,7 @@ export const AddNoteForm = () => {
   const [addRequestStatus, setAddRequestStatus] = useState("idle");
 
   const users = useSelector(selectAllUsers);
-
+  const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const onTitleChanged = (e) => setTitle(e.target.value);
@@ -30,6 +30,7 @@ export const AddNoteForm = () => {
         setTitle("");
         setContent("");
         setUserId("");
+        navigate('/')
       } catch (err) {
         console.error("Failed to save the post", err);
       } finally {
